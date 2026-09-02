@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enabled+ Historic Property Guard
 // @namespace    sixx.enabledplus.tools
-// @version      1.3.0
+// @version      1.4.0
 // @description  Detects historic-property flags and checks supported official public records.
 // @author       Sixx
 // @updateURL    https://raw.githubusercontent.com/TheOfficialsixx/enabledplus-historic-property-guard/main/enabledplus-historic-guard.user.js
@@ -19,6 +19,7 @@
   const NYC_DATASET = "gpmc-yuvp";
   const NYC_MAP = "https://experience.arcgis.com/experience/fa1bcaad31374a88839da3f0166e640a/page/Page";
   const SF_PIM = "https://sfplanninggis.org/pim/";
+  const PANEL_STATE_KEY = "ep-historic-guard-window-v1";
   let scanTimer = 0;
   let dismissed = false;
   let lastKey = "";
@@ -156,10 +157,10 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      #${PANEL_ID}{position:fixed;left:14px;top:82px;z-index:2147483645;width:min(268px,calc(100vw - 20px));border:1px solid #64748b;border-radius:9px;background:#f8fafc;color:#17202a;box-shadow:0 7px 20px rgba(15,23,42,.18);font:11px/1.35 Arial,sans-serif;overflow:hidden}
-      #${PANEL_ID}[data-level=clear]{border-color:#15803d;background:#f0fdf4}#${PANEL_ID}[data-level=review]{border-color:#ca8a04;background:#fefce8}#${PANEL_ID}[data-level=match]{border-color:#b91c1c;background:#fff1f2}#${PANEL_ID}[data-level=checking]{border-color:#2563eb;background:#eff6ff}#${PANEL_ID}[data-level=unknown]{border-color:#7c3aed;background:#f5f3ff}
-      #${PANEL_ID} .eh-head{display:flex;gap:7px;padding:8px 9px 6px;cursor:move;user-select:none;touch-action:none}#${PANEL_ID} .eh-dot{width:9px;height:9px;margin-top:3px;border-radius:50%;background:#64748b;flex:none}#${PANEL_ID}[data-level=clear] .eh-dot{background:#16a34a}#${PANEL_ID}[data-level=review] .eh-dot{background:#ca8a04}#${PANEL_ID}[data-level=match] .eh-dot{background:#dc2626}#${PANEL_ID}[data-level=checking] .eh-dot{background:#2563eb;animation:ehpulse 1s infinite}#${PANEL_ID}[data-level=unknown] .eh-dot{background:#7c3aed}
-      #${PANEL_ID} strong{display:block;font-size:12px}#${PANEL_ID} p{margin:2px 0 0;color:#475569}#${PANEL_ID} .eh-meta{margin:0 9px 7px 25px;color:#475569;font-size:10px}#${PANEL_ID} .eh-label{font-weight:700;color:#334155;margin-top:5px}#${PANEL_ID} .eh-address{margin-top:2px;padding:5px 6px;border-radius:5px;background:rgba(255,255,255,.72);word-break:break-word}#${PANEL_ID} .eh-zip{padding:5px 6px;border-radius:5px;background:#ede9fe;color:#5b21b6;font-weight:700;margin-top:5px}#${PANEL_ID} .eh-actions{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;padding:6px 7px;border-top:1px solid rgba(71,85,105,.16);background:rgba(255,255,255,.55)}#${PANEL_ID} button,#${PANEL_ID} a{border:1px solid rgba(71,85,105,.3);border-radius:5px;padding:4px 6px;background:#fff;color:#17202a;font:600 10px Arial,sans-serif;text-decoration:none;cursor:pointer}#${PANEL_ID} .eh-ok{background:#17202a;color:#fff}@keyframes ehpulse{50%{opacity:.3}}
+      #${PANEL_ID}{position:fixed;left:14px;top:82px;z-index:999996;display:flex;flex-direction:column;width:min(285px,calc(100vw - 20px));min-width:220px;min-height:125px;max-width:calc(100vw - 8px);max-height:calc(100vh - 8px);border:1px solid #50546b;border-radius:11px;background:#282a36;color:#f8f8f2;box-shadow:0 12px 30px rgba(0,0,0,.34);font:12px/1.4 "Segoe UI",Arial,sans-serif;overflow:hidden;resize:both}
+      #${PANEL_ID}[data-level=clear]{border-color:#50fa7b}#${PANEL_ID}[data-level=review]{border-color:#ffb86c}#${PANEL_ID}[data-level=match]{border-color:#ff5555}#${PANEL_ID}[data-level=checking]{border-color:#8be9fd}#${PANEL_ID}[data-level=unknown]{border-color:#bd93f9}
+      #${PANEL_ID} .eh-head{display:flex;flex:0 0 auto;gap:9px;padding:10px 11px 9px;background:#21222c;cursor:move;user-select:none;touch-action:none}#${PANEL_ID} .eh-dot{width:11px;height:11px;margin-top:3px;border-radius:50%;background:#6272a4;box-shadow:0 0 0 4px rgba(98,114,164,.16);flex:none}#${PANEL_ID}[data-level=clear] .eh-dot{background:#50fa7b}#${PANEL_ID}[data-level=review] .eh-dot{background:#ffb86c}#${PANEL_ID}[data-level=match] .eh-dot{background:#ff5555}#${PANEL_ID}[data-level=checking] .eh-dot{background:#8be9fd;animation:ehpulse 1s infinite}#${PANEL_ID}[data-level=unknown] .eh-dot{background:#bd93f9}
+      #${PANEL_ID} strong{display:block;font-size:13px;letter-spacing:.015em}#${PANEL_ID} p{margin:3px 0 0;color:#c7c9d3}#${PANEL_ID} .eh-body{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#6272a4 #21222c;scrollbar-width:thin}#${PANEL_ID} .eh-body::-webkit-scrollbar{width:9px}#${PANEL_ID} .eh-body::-webkit-scrollbar-track{background:#21222c}#${PANEL_ID} .eh-body::-webkit-scrollbar-thumb{background:#6272a4;border:2px solid #21222c;border-radius:8px}#${PANEL_ID} .eh-meta{margin:8px 10px;color:#c7c9d3;font-size:11px}#${PANEL_ID} .eh-label{font-weight:700;color:#f8f8f2;margin-top:5px}#${PANEL_ID} .eh-address{margin-top:3px;padding:6px 7px;border:1px solid #55596e;border-radius:6px;background:#30323f;word-break:break-word}#${PANEL_ID} .eh-zip{padding:6px 7px;border:1px solid #bd93f9;border-radius:6px;background:#3a304d;color:#f8f8f2;font-weight:700;margin-top:6px}#${PANEL_ID} .eh-actions{display:flex;flex:0 0 auto;flex-wrap:wrap;gap:5px;justify-content:flex-end;padding:7px 9px;border-top:1px solid #44475a;background:#242630}#${PANEL_ID} button,#${PANEL_ID} a{border:1px solid #62667e;border-radius:7px;padding:5px 7px;background:#343746;color:#f8f8f2;font:600 11px "Segoe UI",Arial,sans-serif;text-decoration:none;cursor:pointer}#${PANEL_ID} button:hover,#${PANEL_ID} a:hover{background:#44475a}#${PANEL_ID} .eh-ok{background:#6272a4;color:#fff;border-color:#7b88b6}@keyframes ehpulse{50%{opacity:.3}}
     `;
     document.head.appendChild(style);
   }
@@ -171,15 +172,17 @@
       panel.id = PANEL_ID;
       panel.setAttribute("aria-live", "polite");
       document.body.appendChild(panel);
+      restorePanelState(panel);
+      enableResizePersistence(panel);
     }
-    panel.style.display = dismissed ? "none" : "block";
+    panel.style.display = dismissed ? "none" : "flex";
     panel.dataset.level = result.level;
     const url = officialUrl(type, lead);
     const nycAddress = clean([lead.street, lead.cityStateZip].filter(Boolean).join(", "));
     const facts = [lead.age !== null ? `Age detected: ${lead.age}` : "Age not detected", type === "sf" ? "San Francisco" : type === "nyc" ? "NYC/borough check" : "Other location"];
     panel.innerHTML = `
       <div class="eh-head"><span class="eh-dot"></span><div><strong>${escapeHtml(result.title)}</strong><p>${escapeHtml(result.message)}</p></div></div>
-      <div class="eh-meta">${escapeHtml(facts.join(" · "))}${lead.zipChanged ? `<div class="eh-zip">Routing ZIP changed. Do not modify it; checking uses street/city/state.</div>` : ""}</div>
+      <div class="eh-body"><div class="eh-meta">${escapeHtml(facts.join(" · "))}${lead.zipChanged ? `<div class="eh-zip">Routing ZIP changed. Do not modify it; checking uses street/city/state.</div>` : ""}</div></div>
       <div class="eh-actions">${type === "nyc" && url && nycAddress ? `<button id="eh-nyc-open">Copy address + open</button>` : url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener">Official report</a>` : ""}<button id="eh-refresh">Recheck</button><button class="eh-ok" id="eh-ok">Okay</button></div>`;
     panel.querySelector("#eh-ok").onclick = () => { dismissed = true; panel.style.display = "none"; };
     panel.querySelector("#eh-refresh").onclick = () => { lastKey = ""; scan(true); };
@@ -223,8 +226,58 @@
         panel.style.left = `${Math.max(0, Math.min(innerWidth - panel.offsetWidth, move.clientX - dx))}px`;
         panel.style.top = `${Math.max(0, Math.min(innerHeight - panel.offsetHeight, move.clientY - dy))}px`;
       };
-      handle.onpointerup = handle.onpointercancel = () => { handle.onpointermove = null; };
+      handle.onpointerup = handle.onpointercancel = () => {
+        handle.onpointermove = null;
+        keepPanelOnScreen(panel);
+        savePanelState(panel);
+      };
     };
+  }
+
+  function restorePanelState(panel) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PANEL_STATE_KEY) || "null");
+      if (!saved) return;
+      if (Number.isFinite(saved.left)) panel.style.left = `${saved.left}px`;
+      if (Number.isFinite(saved.top)) panel.style.top = `${saved.top}px`;
+      if (Number.isFinite(saved.width)) panel.style.width = `${saved.width}px`;
+      if (Number.isFinite(saved.height)) panel.style.height = `${saved.height}px`;
+      keepPanelOnScreen(panel);
+    } catch (_) {}
+  }
+
+  function savePanelState(panel) {
+    if (!panel || panel.style.display === "none") return;
+    const rect = panel.getBoundingClientRect();
+    try {
+      localStorage.setItem(PANEL_STATE_KEY, JSON.stringify({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      }));
+    } catch (_) {}
+  }
+
+  function keepPanelOnScreen(panel) {
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    const width = Math.min(rect.width, Math.max(220, innerWidth - 8));
+    const height = Math.min(rect.height, Math.max(125, innerHeight - 8));
+    panel.style.width = `${width}px`;
+    panel.style.height = `${height}px`;
+    panel.style.left = `${Math.max(4, Math.min(innerWidth - width - 4, rect.left))}px`;
+    panel.style.top = `${Math.max(4, Math.min(innerHeight - height - 4, rect.top))}px`;
+  }
+
+  function enableResizePersistence(panel) {
+    if (!window.ResizeObserver || panel.dataset.resizeReady === "true") return;
+    panel.dataset.resizeReady = "true";
+    let timer = 0;
+    new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => savePanelState(panel), 180);
+    }).observe(panel);
   }
 
   function escapeHtml(value) {
@@ -266,8 +319,8 @@
 
   function start() {
     if (!document.body || document.getElementById(PANEL_ID)) return;
-    document.documentElement.dataset.historicGuardLoaded = "1.2.0";
-    console.info("[Historic Guard] v1.2.0 injected at", location.href);
+    document.documentElement.dataset.historicGuardLoaded = "1.4.0";
+    console.info("[Historic Guard] v1.4.0 injected at", location.href);
     addStyles();
     scan(true);
     new MutationObserver(scheduleScan).observe(document.documentElement, {childList:true, subtree:true});
@@ -278,6 +331,12 @@
     backgroundScanTimer = window.setInterval(() => scan(false), 1000);
     window.addEventListener("hashchange", scheduleScan);
     window.addEventListener("popstate", scheduleScan);
+    window.addEventListener("resize", () => {
+      const panel = document.getElementById(PANEL_ID);
+      if (!panel) return;
+      keepPanelOnScreen(panel);
+      savePanelState(panel);
+    });
   }
 
   if (document.body) start();
